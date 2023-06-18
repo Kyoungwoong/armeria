@@ -212,6 +212,18 @@ final class DefaultRequestLog implements RequestLog, RequestLogBuilder {
         return hasInterestedFlags(flags, interestedFlags);
     }
 
+    @Nullable
+    @Override
+    public RequestLog getIfAvailable(RequestLogProperty... properties) {
+        return isAvailable(properties) ? this : null;
+    }
+
+    @Nullable
+    @Override
+    public RequestLog getIfAvailable(Iterable<RequestLogProperty> properties) {
+        return isAvailable(properties) ? this : null;
+    }
+
     private static boolean hasInterestedFlags(int flags, RequestLogProperty property) {
         return hasInterestedFlags(flags, property.flag());
     }
@@ -363,8 +375,7 @@ final class DefaultRequestLog implements RequestLog, RequestLogBuilder {
             future = newFuture;
         }
 
-        @SuppressWarnings("unchecked")
-        final CompletableFuture<T> cast = (CompletableFuture<T>) future;
+        @SuppressWarnings("unchecked") final CompletableFuture<T> cast = (CompletableFuture<T>) future;
         return cast;
     }
 
@@ -387,7 +398,7 @@ final class DefaultRequestLog implements RequestLog, RequestLogBuilder {
     }
 
     private void updateFlags(int flags) {
-        for (;;) {
+        for (; ; ) {
             final int oldFlags = this.flags;
             final int newFlags = oldFlags | flags;
             if (oldFlags == newFlags) {
@@ -498,7 +509,7 @@ final class DefaultRequestLog implements RequestLog, RequestLogBuilder {
             flag |= RequestLogProperty.NAME.flag();
         }
 
-        for (;;) {
+        for (; ; ) {
             final int oldFlags = deferredFlags;
             final int newFlags = oldFlags | flag;
             if (oldFlags == newFlags) {
@@ -535,33 +546,33 @@ final class DefaultRequestLog implements RequestLog, RequestLogBuilder {
         // Update the available properties always by adding a callback,
         // because the child's properties will never be available immediately.
         child.whenAvailable(RequestLogProperty.REQUEST_START_TIME)
-             .thenAccept(log -> startRequest(log.requestStartTimeNanos(), log.requestStartTimeMicros()));
+                .thenAccept(log -> startRequest(log.requestStartTimeNanos(), log.requestStartTimeMicros()));
         child.whenAvailable(RequestLogProperty.SESSION)
-             .thenAccept(log -> session(log.channel(), log.sessionProtocol(),
-                                        log.sslSession(), log.connectionTimings()));
+                .thenAccept(log -> session(log.channel(), log.sessionProtocol(),
+                        log.sslSession(), log.connectionTimings()));
         child.whenAvailable(RequestLogProperty.SCHEME)
-             .thenAccept(log -> serializationFormat(log.scheme().serializationFormat()));
+                .thenAccept(log -> serializationFormat(log.scheme().serializationFormat()));
         child.whenAvailable(RequestLogProperty.NAME)
-             .thenAccept(log -> {
-                 final String serviceName = log.serviceName();
-                 final String name = log.name();
-                 if (serviceName != null) {
-                     name(serviceName, name);
-                 } else {
-                     name(name);
-                 }
-             });
+                .thenAccept(log -> {
+                    final String serviceName = log.serviceName();
+                    final String name = log.name();
+                    if (serviceName != null) {
+                        name(serviceName, name);
+                    } else {
+                        name(name);
+                    }
+                });
         child.whenAvailable(RequestLogProperty.REQUEST_FIRST_BYTES_TRANSFERRED_TIME)
-             .thenAccept(log -> {
-                 final Long timeNanos = log.requestFirstBytesTransferredTimeNanos();
-                 if (timeNanos != null) {
-                     requestFirstBytesTransferred(timeNanos);
-                 }
-             });
+                .thenAccept(log -> {
+                    final Long timeNanos = log.requestFirstBytesTransferredTimeNanos();
+                    if (timeNanos != null) {
+                        requestFirstBytesTransferred(timeNanos);
+                    }
+                });
         child.whenAvailable(RequestLogProperty.REQUEST_HEADERS)
-             .thenAccept(log -> requestHeaders(log.requestHeaders()));
+                .thenAccept(log -> requestHeaders(log.requestHeaders()));
         child.whenAvailable(RequestLogProperty.REQUEST_CONTENT)
-             .thenAccept(log -> requestContent(log.requestContent(), log.rawRequestContent()));
+                .thenAccept(log -> requestContent(log.requestContent(), log.rawRequestContent()));
         child.whenRequestComplete().thenAccept(log -> {
             requestLength(log.requestLength());
             requestContentPreview(log.requestContentPreview());
@@ -587,8 +598,8 @@ final class DefaultRequestLog implements RequestLog, RequestLogBuilder {
             startResponse(lastChild.responseStartTimeNanos(), lastChild.responseStartTimeMicros(), true);
         } else {
             lastChild.whenAvailable(RequestLogProperty.RESPONSE_START_TIME)
-                     .thenAccept(log -> startResponse(log.responseStartTimeNanos(),
-                                                      log.responseStartTimeMicros(), true));
+                    .thenAccept(log -> startResponse(log.responseStartTimeNanos(),
+                            log.responseStartTimeMicros(), true));
         }
 
         if (lastChild.isAvailable(RequestLogProperty.RESPONSE_FIRST_BYTES_TRANSFERRED_TIME)) {
@@ -598,26 +609,26 @@ final class DefaultRequestLog implements RequestLog, RequestLogBuilder {
             }
         } else {
             lastChild.whenAvailable(RequestLogProperty.RESPONSE_FIRST_BYTES_TRANSFERRED_TIME)
-                     .thenAccept(log -> {
-                         final Long timeNanos = log.responseFirstBytesTransferredTimeNanos();
-                         if (timeNanos != null) {
-                             responseFirstBytesTransferred(timeNanos);
-                         }
-                     });
+                    .thenAccept(log -> {
+                        final Long timeNanos = log.responseFirstBytesTransferredTimeNanos();
+                        if (timeNanos != null) {
+                            responseFirstBytesTransferred(timeNanos);
+                        }
+                    });
         }
 
         if (lastChild.isAvailable(RequestLogProperty.RESPONSE_HEADERS)) {
             responseHeaders(lastChild.responseHeaders());
         } else {
             lastChild.whenAvailable(RequestLogProperty.RESPONSE_HEADERS)
-                     .thenAccept(log -> responseHeaders(log.responseHeaders()));
+                    .thenAccept(log -> responseHeaders(log.responseHeaders()));
         }
 
         if (lastChild.isAvailable(RequestLogProperty.RESPONSE_TRAILERS)) {
             responseTrailers(lastChild.responseTrailers());
         } else {
             lastChild.whenAvailable(RequestLogProperty.RESPONSE_TRAILERS)
-                     .thenAccept(log -> responseTrailers(log.responseTrailers()));
+                    .thenAccept(log -> responseTrailers(log.responseTrailers()));
         }
 
         if (lastChild.isComplete()) {
@@ -697,8 +708,8 @@ final class DefaultRequestLog implements RequestLog, RequestLogBuilder {
         }
 
         session0(channel, requireNonNull(sessionProtocol, "sessionProtocol"),
-                 ChannelUtil.findSslSession(channel, sessionProtocol),
-                 connectionTimings);
+                ChannelUtil.findSslSession(channel, sessionProtocol),
+                connectionTimings);
     }
 
     @Override
@@ -1016,7 +1027,7 @@ final class DefaultRequestLog implements RequestLog, RequestLogBuilder {
         if (requestCause != null) {
             // Will auto-fill request content and its preview if request has failed.
             deferredFlags = this.deferredFlags & (~(RequestLogProperty.REQUEST_CONTENT.flag() |
-                                                    RequestLogProperty.REQUEST_CONTENT_PREVIEW.flag()));
+                    RequestLogProperty.REQUEST_CONTENT_PREVIEW.flag()));
         } else {
             deferredFlags = this.deferredFlags;
         }
@@ -1043,14 +1054,14 @@ final class DefaultRequestLog implements RequestLog, RequestLogBuilder {
                 requestHeaders = req.headers();
             } else {
                 requestHeaders = sessionProtocol.isTls() ? DUMMY_REQUEST_HEADERS_HTTPS
-                                                         : DUMMY_REQUEST_HEADERS_HTTP;
+                        : DUMMY_REQUEST_HEADERS_HTTP;
             }
         }
 
         // Set names if request content is not deferred or it was deferred but has been set
         // before the request completion.
         if (!hasInterestedFlags(deferredFlags, RequestLogProperty.REQUEST_CONTENT) ||
-            isAvailable(RequestLogProperty.REQUEST_CONTENT)) {
+                isAvailable(RequestLogProperty.REQUEST_CONTENT)) {
             setNamesIfAbsent();
         }
         this.requestEndTimeNanos = requestEndTimeNanos;
@@ -1362,7 +1373,7 @@ final class DefaultRequestLog implements RequestLog, RequestLogBuilder {
         if (responseCause != null) {
             // Will auto-fill response content and its preview if response has failed.
             deferredFlags = this.deferredFlags & (~(RequestLogProperty.RESPONSE_CONTENT.flag() |
-                                                    RequestLogProperty.RESPONSE_CONTENT_PREVIEW.flag()));
+                    RequestLogProperty.RESPONSE_CONTENT_PREVIEW.flag()));
         } else {
             deferredFlags = this.deferredFlags;
         }
@@ -1393,7 +1404,7 @@ final class DefaultRequestLog implements RequestLog, RequestLogBuilder {
             return;
         }
         if (responseCause instanceof HttpStatusException ||
-            responseCause instanceof HttpResponseException) {
+                responseCause instanceof HttpResponseException) {
             // Log the responseCause only when an Http{Status,Response}Exception was created with a cause.
             responseCause = responseCause.getCause();
         }
@@ -1425,7 +1436,7 @@ final class DefaultRequestLog implements RequestLog, RequestLogBuilder {
 
         final StringBuilder buf = toStringWithoutChildren(new StringBuilder(1024), req, res);
         buf.append(System.lineSeparator())
-           .append("Children:");
+                .append("Children:");
 
         for (int i = 0; i < numChildren; i++) {
             buf.append(System.lineSeparator());
@@ -1437,10 +1448,10 @@ final class DefaultRequestLog implements RequestLog, RequestLogBuilder {
 
     private static StringBuilder toStringWithoutChildren(StringBuilder buf, String req, String res) {
         return buf.append('{')
-                  .append(req)
-                  .append(", ")
-                  .append(res)
-                  .append('}');
+                .append(req)
+                .append(", ")
+                .append(res)
+                .append('}');
     }
 
     private static final class RequestLogFuture extends EventLoopCheckingFuture<RequestLog> {
@@ -1521,6 +1532,22 @@ final class DefaultRequestLog implements RequestLog, RequestLogBuilder {
             return true;
         }
 
+        @Nullable
+        @Override
+        public RequestLog getIfAvailable(RequestLogProperty... properties) {
+            requireNonNull(properties, "properties");
+            checkArgument(properties.length != 0, "properties is empty.");
+            return this;
+        }
+
+        @Nullable
+        @Override
+        public RequestLog getIfAvailable(Iterable<RequestLogProperty> properties) {
+            requireNonNull(properties, "properties");
+            checkArgument(!Iterables.isEmpty(properties), "properties is empty.");
+            return this;
+        }
+
         @Override
         public RequestLog partial() {
             return this;
@@ -1537,8 +1564,7 @@ final class DefaultRequestLog implements RequestLog, RequestLogBuilder {
         @Override
         public CompletableFuture<RequestOnlyLog> whenRequestComplete() {
             // OK to cast because the future is unmodifiable.
-            @SuppressWarnings("unchecked")
-            final CompletableFuture<RequestOnlyLog> cast =
+            @SuppressWarnings("unchecked") final CompletableFuture<RequestOnlyLog> cast =
                     (CompletableFuture<RequestOnlyLog>) (CompletableFuture<?>) whenComplete();
             return cast;
         }
