@@ -32,6 +32,7 @@ import com.linecorp.armeria.common.HttpMethod;
 import com.linecorp.armeria.common.HttpStatus;
 import com.linecorp.armeria.common.ResponseHeaders;
 import com.linecorp.armeria.common.annotation.Nullable;
+import com.linecorp.armeria.common.logging.RequestLog;
 import com.linecorp.armeria.common.logging.RequestLogBuilder;
 import com.linecorp.armeria.common.logging.RequestLogProperty;
 import com.linecorp.armeria.common.stream.ClosedStreamException;
@@ -113,7 +114,10 @@ abstract class AbstractHttpResponseHandler {
         //    the subscriber attempts to write the next data to the stream closed at 2).
         if (!isWritable()) {
             Throwable cause = null;
-            cause = reqCtx.log().getIfAvailable(RequestLogProperty.RESPONSE_CAUSE).responseCause();
+            final RequestLog log = reqCtx.log().getIfAvailable(RequestLogProperty.RESPONSE_CAUSE);
+            if (log != null) {
+                cause = log.responseCause();
+            }
             if (cause == null) {
                 if (reqCtx.sessionProtocol().isMultiplex()) {
                     cause = ClosedStreamException.get();

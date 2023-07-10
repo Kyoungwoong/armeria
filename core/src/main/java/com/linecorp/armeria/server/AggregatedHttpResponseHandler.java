@@ -22,6 +22,7 @@ import java.nio.channels.ClosedChannelException;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiFunction;
 
+import com.linecorp.armeria.common.logging.RequestLog;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -174,7 +175,10 @@ final class AggregatedHttpResponseHandler extends AbstractHttpResponseHandler
             logBuilder().responseFirstBytesTransferred();
             if (tryComplete(cause)) {
                 if (cause == null) {
-                    cause = reqCtx.log().getIfAvailable(RequestLogProperty.RESPONSE_CAUSE).responseCause();
+                    final RequestLog log = reqCtx.log().getIfAvailable(RequestLogProperty.RESPONSE_CAUSE);
+                    if (log != null) {
+                        cause = log.responseCause();
+                    }
                 }
                 endLogRequestAndResponse(cause);
                 maybeWriteAccessLog();

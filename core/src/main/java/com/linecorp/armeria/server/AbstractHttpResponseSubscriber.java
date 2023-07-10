@@ -22,6 +22,7 @@ import static com.linecorp.armeria.internal.common.HttpHeadersUtil.mergeTrailers
 import java.nio.channels.ClosedChannelException;
 import java.util.concurrent.CompletableFuture;
 
+import com.linecorp.armeria.common.logging.RequestLog;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import org.slf4j.Logger;
@@ -331,7 +332,10 @@ abstract class AbstractHttpResponseSubscriber extends AbstractHttpResponseHandle
     private void succeed() {
         if (tryComplete(null)) {
             Throwable cause = null;
-            cause = reqCtx.log().getIfAvailable(RequestLogProperty.RESPONSE_CAUSE).responseCause();
+            final RequestLog log = reqCtx.log().getIfAvailable(RequestLogProperty.RESPONSE_CAUSE);
+            if (log != null) {
+                cause = log.responseCause();
+            }
             endLogRequestAndResponse(cause);
             maybeWriteAccessLog();
         }
