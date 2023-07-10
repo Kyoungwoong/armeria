@@ -113,9 +113,7 @@ abstract class AbstractHttpResponseHandler {
         //    the subscriber attempts to write the next data to the stream closed at 2).
         if (!isWritable()) {
             Throwable cause = null;
-            if (reqCtx.log().isAvailable(RequestLogProperty.RESPONSE_CAUSE)) {
-                cause = reqCtx.log().ensureAvailable(RequestLogProperty.RESPONSE_CAUSE).responseCause();
-            }
+            cause = reqCtx.log().getIfAvailable(RequestLogProperty.RESPONSE_CAUSE).responseCause();
             if (cause == null) {
                 if (reqCtx.sessionProtocol().isMultiplex()) {
                     cause = ClosedStreamException.get();

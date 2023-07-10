@@ -331,9 +331,7 @@ abstract class AbstractHttpResponseSubscriber extends AbstractHttpResponseHandle
     private void succeed() {
         if (tryComplete(null)) {
             Throwable cause = null;
-            if (reqCtx.log().isAvailable(RequestLogProperty.RESPONSE_CAUSE)) {
-                cause = reqCtx.log().ensureAvailable(RequestLogProperty.RESPONSE_CAUSE).responseCause();
-            }
+            cause = reqCtx.log().getIfAvailable(RequestLogProperty.RESPONSE_CAUSE).responseCause();
             endLogRequestAndResponse(cause);
             maybeWriteAccessLog();
         }

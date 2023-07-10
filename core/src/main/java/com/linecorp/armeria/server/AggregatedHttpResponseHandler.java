@@ -173,8 +173,8 @@ final class AggregatedHttpResponseHandler extends AbstractHttpResponseHandler
         if (isSuccess) {
             logBuilder().responseFirstBytesTransferred();
             if (tryComplete(cause)) {
-                if (cause == null && reqCtx.log().isAvailable(RequestLogProperty.RESPONSE_CAUSE)) {
-                    cause = reqCtx.log().ensureAvailable(RequestLogProperty.RESPONSE_CAUSE).responseCause();
+                if (cause == null) {
+                    cause = reqCtx.log().getIfAvailable(RequestLogProperty.RESPONSE_CAUSE).responseCause();
                 }
                 endLogRequestAndResponse(cause);
                 maybeWriteAccessLog();
